@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  pms-web:
+    # Use the Dockerfile located in the current directory to build the Docker image for this service
+    build: .
+    # Map port 80 of the host to port 80 of the container
+    ports:
+      - "80:80"
+    # Ensure that pms-db starts before pms-web
+    depends_on:
+      - pms-db
+    # Mount volumes to provide access to specific directories in the host machine
+    volumes:
+      - ./pms-new/images:/var/www/html/images
+      - ./pms-new/csv:/var/www/html/csv
+      - ./pms-new/bills/slt:/var/www/html/bills/slt
+    # Define a custom network for communication between services
+    networks:
+      - pms-network
+    # Define environment variables for the PHP application to connect to the MySQL database
+    environment:
+      DB_HOST: pms-db
+      DB_USER: root
+      DB_PASSWORD: abc12345##
+
+  pms-db:
+    # Use the official MySQL image from Docker Hub
+    image: mysql:8.0
+    # Set environment variables for configuring MySQL
+    environment:
+      MYSQL_ROOT_PASSWORD: abc12345##
+    # Mount a volume to persist MySQL data
+    volumes:
+      - db_data:/var/lib/mysql
+      # Mount a SQL script into the container to initialize the MySQL database
+      - ./alldatabases.sql:/docker-entrypoint-initdb.d/alldatabases.sql
+    # Define the same custom network as used by pms-web
+    networks:
+      - pms-network
+
+# Define a custom network for communication between services
+networks:
+  pms-network:
+    driver: bridge
+
+# Define a named volume to persist MySQL data
+volumes:
+  db_data:
